@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/topic.dart';
-import '../models/TopicDetailScreen.dart';  // Chemin vers votre fichier où 'TopicDetailScreen' est défini
+  // Chemin vers votre fichier où 'TopicDetailScreen' est défini
+import "./treads_screen.dart";
 
 import '../services/api_services.dart';
 
@@ -60,14 +61,15 @@ subtitle: Column(
   ],
 ),
 onTap: () {
-  // Naviguer vers un autre écran où le contenu du sujet sera affiché
+  // Naviguer vers l'écran des threads (ThreadsScreen)
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => TopicDetailScreen(topic: topics[index]),
+      builder: (context) => TopicDetailScreen(topic: topics[index]), // Remplacer TopicDetailScreen par ThreadsScreen
     ),
   );
 },
+
 
                   ),
                 );
