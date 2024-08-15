@@ -62,26 +62,3 @@ def create_topic():
         cursor.close()
         connection.close()
 
-@bp.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()
-
-    if user:
-        cursor.close()
-        conn.close()
-        return jsonify({"message": "Utilisateur existe déjà"}), 400
-
-    hashed_password = generate_password_hash(password)
-    cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({"message": "Utilisateur enregistré avec succès"}), 201

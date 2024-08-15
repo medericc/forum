@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://127.0.0.1:5000/api';  // Assurez-vous que l'URL correspond au préfixe dans Flask
+static const String baseUrl = 'http://127.0.0.1:5000/api/auth';
 
   Future<bool> login(String username, String password) async {
     final response = await http.post(

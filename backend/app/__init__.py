@@ -10,7 +10,8 @@ def create_app():
     
     # Enregistrer le blueprint pour l'authentification
     from app.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+# Enregistrement du Blueprint
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')     
 
     # Enregistrer le blueprint pour les autres routes
     from app.routes import bp as routes_bp

@@ -36,7 +36,7 @@ def register():
     if user:
         cursor.close()
         conn.close()
-        return jsonify({"message": "User already exists"}), 400
+        return jsonify({"message": "Utilisateur existe déjà"}), 400
 
     hashed_password = generate_password_hash(password)
     cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
@@ -44,4 +44,4 @@ def register():
     cursor.close()
     conn.close()
 
-    return jsonify({"message": "User registered successfully"}), 201
+    return jsonify({"message": "Utilisateur enregistré avec succès"}), 201

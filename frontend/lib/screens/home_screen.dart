@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<bool> _registerUser(String username, String password) async {
     final response = await http.post(
-      Uri.parse('http://127.0.0.1:5000/register'),
+      Uri.parse('http://127.0.0.1:5000/api/auth/register'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
