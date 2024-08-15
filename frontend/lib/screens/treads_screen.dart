@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/topic.dart';
+import '../models/reply.dart' as reply_model;
+import '../services/api_services.dart';
+import '../services/auth.service.dart';
 
 class TopicDetailScreen extends StatefulWidget {
   final Topic topic;
@@ -12,13 +15,23 @@ class TopicDetailScreen extends StatefulWidget {
 
 class _TopicDetailScreenState extends State<TopicDetailScreen> {
   late TextEditingController _replyController;
-  late List<Reply> _replies;
+  late Future<List<reply_model.Reply>> futureReplies;
+  bool isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
     _replyController = TextEditingController();
-    _replies = List.from(widget.topic.replies); // Copie locale des réponses existantes
+    futureReplies = ApiService().getReplies(widget.topic.id);
+    _checkLoginStatus();
+  }
+
+  void _checkLoginStatus() async {
+    // Vérifiez si l'utilisateur est connecté
+    bool loggedIn = await AuthService().isLoggedIn;
+    setState(() {
+      isLoggedIn = loggedIn;
+    });
   }
 
   @override
@@ -27,19 +40,47 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     super.dispose();
   }
 
-  void _addReply() {
+  void _addReply() async {
     if (_replyController.text.trim().isEmpty) return;
 
-    final newReply = Reply(
-      author: 'Utilisateur',  // Vous pouvez adapter pour obtenir l'utilisateur courant
-      content: _replyController.text,
-    );
+    if (!isLoggedIn) {
+      _showLoginAlert();
+      return;
+    }
 
+    await ApiService().addReply(widget.topic.id, _replyController.text);
     setState(() {
-      _replies.add(newReply);  // Ajouter la nouvelle réponse à la liste
+      futureReplies = ApiService().getReplies(widget.topic.id); // Reload replies
     });
 
-    _replyController.clear();  // Effacer le champ de texte après l'envoi
+    _replyController.clear();
+  }
+
+  void _showLoginAlert() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Connexion requise'),
+          content: Text('Vous devez être connecté pour répondre à ce sujet.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushNamed(context, '/login');
+              },
+              child: Text('Se connecter'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -63,22 +104,47 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
             Text('Auteur: ${widget.topic.userId}'),
             Text('Date: ${widget.topic.createdAt}'),
             SizedBox(height: 32.0),
-            Expanded(
-              child: _replies.isEmpty
-                  ? Center(child: Text('Pas de réponses pour le moment'))
-                  : ListView.builder(
-                      itemCount: _replies.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            title: Text(_replies[index].author),
-                            subtitle: Text(_replies[index].content),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+           Expanded(
+  child: FutureBuilder<List<reply_model.Reply>>(
+    future: futureReplies,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Erreur: ${snapshot.error}'));
+      } else if (snapshot.hasData) {
+        // Check if the list is empty
+        if (snapshot.data!.isEmpty) {
+          return Center(child: Text('Pas de réponses pour le moment'));
+        } else {
+          List<reply_model.Reply> replies = snapshot.data!;
+          return ListView.builder(
+            itemCount: replies.length,
+            itemBuilder: (context, index) {
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8.0),
+                child: ListTile(
+                  title: Text('Utilisateur ${replies[index].userId}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(replies[index].content),
+                      Text('Posté le ${replies[index].createdAt}'),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      } else {
+        // Fallback case for unexpected scenarios
+        return Center(child: Text('Pas de réponses pour le moment'));
+      }
+    },
+  ),
+),
+
             SizedBox(height: 16.0),
             TextField(
               controller: _replyController,

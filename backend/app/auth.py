@@ -1,8 +1,11 @@
+import jwt
+import datetime
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from .db import get_db_connection
 
 auth_bp = Blueprint('auth', __name__)
+SECRET_KEY = 'votre_clé_secrète'  # Remplacez par une clé secrète robuste
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -18,7 +21,13 @@ def login():
     conn.close()
 
     if user and check_password_hash(user['password_hash'], password):
-        return jsonify({"message": "Login successful"}), 200
+        # Génération du token JWT
+        token = jwt.encode({
+            'user_id': user['id'],  # ID de l'utilisateur
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)  # Expiration du token dans 24h
+        }, SECRET_KEY, algorithm='HS256')
+
+        return jsonify({"token": token}), 200
     else:
         return jsonify({"message": "Invalid credentials"}), 401
 

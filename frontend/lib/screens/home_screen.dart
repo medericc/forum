@@ -13,7 +13,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isLoggedIn = false;
+ 
+
+   bool isLoggedIn = false;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Login dialog
+  // Dialog de connexion
   void _showLoginDialog(BuildContext context) {
     final TextEditingController _usernameController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
@@ -133,17 +135,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                bool success = await AuthService().login(
+                String? token = await AuthService().login(
                   _usernameController.text,
                   _passwordController.text,
                 );
-                if (success) {
+                if (token != null) {
                   setState(() {
                     isLoggedIn = true;
                   });
                   Navigator.of(context).pop();
                 } else {
-                  // Display an error message
+                  // Affiche un message d'erreur
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Échec de la connexion. Veuillez réessayer.'),
                   ));
@@ -157,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Register dialog
+  // Dialog d'inscription
   void _showRegisterDialog(BuildContext context) {
     final TextEditingController _usernameController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
@@ -204,7 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     content: Text('Inscription réussie. Veuillez vous connecter.'),
                   ));
                 } else {
-                  // Display an error message
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Échec de l\'inscription. Veuillez réessayer.'),
                   ));
@@ -233,99 +234,96 @@ class _HomeScreenState extends State<HomeScreen> {
     return response.statusCode == 201;
   }
 
-void _showCreateTopicDialog(BuildContext context) {
-  final TextEditingController _topicTitleController = TextEditingController();
-  final TextEditingController _topicContentController = TextEditingController();
-  int _selectedCategoryId = 1;
+  void _showCreateTopicDialog(BuildContext context) {
+    final TextEditingController _topicTitleController = TextEditingController();
+    final TextEditingController _topicContentController = TextEditingController();
+    int _selectedCategoryId = 1;
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Créer une nouvelle discussion'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _topicTitleController,
-              decoration: InputDecoration(
-                labelText: 'Titre de la discussion',
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Créer une nouvelle discussion'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _topicTitleController,
+                decoration: InputDecoration(
+                  labelText: 'Titre de la discussion',
+                ),
               ),
-            ),
-            SizedBox(height: 16.0),
-            TextField(
-              controller: _topicContentController,
-              decoration: InputDecoration(
-                labelText: 'Contenu de la discussion',
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _topicContentController,
+                decoration: InputDecoration(
+                  labelText: 'Contenu de la discussion',
+                ),
+                maxLines: 5,
               ),
-              maxLines: 5,
-            ),
-            SizedBox(height: 16.0),
-            DropdownButtonFormField<int>(
-              value: _selectedCategoryId,
-              onChanged: (int? newValue) {
-                setState(() {
-                  _selectedCategoryId = newValue!;
-                });
+              SizedBox(height: 16.0),
+              DropdownButtonFormField<int>(
+                value: _selectedCategoryId,
+                onChanged: (int? newValue) {
+                  setState(() {
+                    _selectedCategoryId = newValue!;
+                  });
+                },
+                items: [
+                  DropdownMenuItem(value: 1, child: Text('Discussions')),
+                  DropdownMenuItem(value: 2, child: Text('Bible')),
+                  DropdownMenuItem(value: 3, child: Text('Vos Réseaux')),
+                ],
+                decoration: InputDecoration(
+                  labelText: 'Choisir une catégorie',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
               },
-              items: [
-                DropdownMenuItem(value: 1, child: Text('Discussions')),
-                DropdownMenuItem(value: 2, child: Text('Bible')),
-                DropdownMenuItem(value: 3, child: Text('Vos Réseaux')),
-              ],
-              decoration: InputDecoration(
-                labelText: 'Choisir une catégorie',
-              ),
+              child: Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                String topicTitle = _topicTitleController.text;
+                String topicContent = _topicContentController.text;
+                bool success = await _createTopic(topicTitle, topicContent, _selectedCategoryId);
+                if (success) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Discussion créée avec succès'),
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Erreur lors de la création de la discussion'),
+                  ));
+                }
+              },
+              child: Text('Créer'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              String topicTitle = _topicTitleController.text;
-              String topicContent = _topicContentController.text;
-              bool success = await _createTopic(topicTitle, topicContent, _selectedCategoryId);
-              if (success) {
-                Navigator.of(context).pop();
-                // Afficher un message de succès
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Discussion créée avec succès'),
-                ));
-              } else {
-                // Afficher un message d'erreur
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Erreur lors de la création de la discussion'),
-                ));
-              }
-            },
-            child: Text('Créer'),
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
-Future<bool> _createTopic(String title, String description, int categoryId) async {
-  final response = await http.post(
-    Uri.parse('http://127.0.0.1:5000/topics'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, dynamic>{
-      'title': title,
-      'description': description,
-      'category_id': categoryId,
-    }),
-  );
+  Future<bool> _createTopic(String title, String description, int categoryId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/topics'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'title': title,
+        'description': description,
+        'category_id': categoryId,
+      }),
+    );
 
-  return response.statusCode == 201;
-}
-
+    return response.statusCode == 201;
+  }
 }

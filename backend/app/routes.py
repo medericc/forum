@@ -3,7 +3,6 @@ from .db import get_db_connection
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 bp = Blueprint('routes', __name__)
 
 # Route pour obtenir la liste des utilisateurs
@@ -46,19 +45,49 @@ def create_topic():
     title = data.get('title')
     description = data.get('description')  # Utilisez 'description' à la place de 'content'
     category_id = data.get('category_id')
-    user_id = 1  # Remplacez par l'ID utilisateur réel, éventuellement récupéré de la session
+    user_id = data.get('user_id')  # Assurez-vous que l'ID utilisateur est envoyé dans la requête
 
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
+        conn = get_db_connection()
+        cursor = conn.cursor()
         sql = "INSERT INTO topics (title, description, user_id, category_id, created_at) VALUES (%s, %s, %s, %s, NOW())"
         cursor.execute(sql, (title, description, user_id, category_id))
-        connection.commit()
+        conn.commit()
+        cursor.close()
+        conn.close()
         return jsonify({"message": "Topic créé avec succès"}), 201
     except mysql.connector.Error as err:
         print(f"Erreur: {err}")
         return jsonify({"error": "Erreur lors de la création du topic"}), 500
-    finally:
-        cursor.close()
-        connection.close()
 
+# Route for adding a reply to a topic
+@bp.route('/reply', methods=['POST'])
+def add_reply():
+    data = request.get_json()
+    topic_id = data.get('topic_id')
+    user_id = data.get('user_id')
+    content = data.get('content')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        sql = "INSERT INTO reply (topic_id, user_id, content, created_at) VALUES (%s, %s, %s, NOW())"
+        cursor.execute(sql, (topic_id, user_id, content))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Réponse ajoutée avec succès"}), 201
+    except mysql.connector.Error as err:
+        print(f"Erreur: {err}")
+        return jsonify({"error": "Erreur lors de l'ajout de la réponse"}), 500
+
+# Route to get replies for a specific topic
+@bp.route('/replies/<int:topic_id>', methods=['GET'])
+def get_replies(topic_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM reply WHERE topic_id = %s", (topic_id,))
+    replies = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(replies if replies else []), 200
