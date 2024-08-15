@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/topic.dart';
+import '../models/TopicDetailScreen.dart';  // Chemin vers votre fichier où 'TopicDetailScreen' est défini
+
 import '../services/api_services.dart';
 
 class TopicListScreen extends StatefulWidget {
@@ -14,11 +16,17 @@ class TopicListScreen extends StatefulWidget {
 class _TopicListScreenState extends State<TopicListScreen> {
   late Future<List<Topic>> futureTopics;
 
-  @override
-  void initState() {
-    super.initState();
-    futureTopics = ApiService().getTopicsByCategory(widget.categoryId);
-  }
+ @override
+void initState() {
+  super.initState();
+  futureTopics = ApiService().getTopicsByCategory(widget.categoryId).then((topics) {
+    if (topics == null) {
+      return []; // Return an empty list if topics is null
+    }
+    return topics;
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +46,29 @@ class _TopicListScreenState extends State<TopicListScreen> {
             return ListView.builder(
               itemCount: topics.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(topics[index].title),
-                  subtitle: Text(topics[index].description),
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  elevation: 4.0,
+                  child: ListTile(
+                 title: Text(topics[index].title, style: TextStyle(fontWeight: FontWeight.bold)),
+subtitle: Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text('Auteur: ${topics[index].userId}'),  // Remplacer `author` par `user_id`
+    Text('Date: ${topics[index].createdAt}'), // Remplacer `createdAt` par `created_at`
+  ],
+),
+onTap: () {
+  // Naviguer vers un autre écran où le contenu du sujet sera affiché
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => TopicDetailScreen(topic: topics[index]),
+    ),
+  );
+},
+
+                  ),
                 );
               },
             );
