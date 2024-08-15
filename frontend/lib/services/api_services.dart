@@ -10,7 +10,7 @@ import '../models/category.dart';
 import '../models/topic.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:5000'; // Change to 10.0.2.2 for Android Emulator
+  static const String baseUrl = 'http://127.0.0.1:5000'; // Change to 10.0.2.2 for Android Emulator
 
   Future<List<User>> getUsers() async {
     final response = await http.get(Uri.parse('$baseUrl/users'));

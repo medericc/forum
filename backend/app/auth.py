@@ -17,7 +17,7 @@ def login():
     cursor.close()
     conn.close()
 
-    if user and check_password_hash(user['password'], password):
+    if user and check_password_hash(user['password_hash'], password):
         return jsonify({"message": "Login successful"}), 200
     else:
         return jsonify({"message": "Invalid credentials"}), 401
@@ -39,7 +39,7 @@ def register():
         return jsonify({"message": "User already exists"}), 400
 
     hashed_password = generate_password_hash(password)
-    cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+    cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
     conn.commit()
     cursor.close()
     conn.close()
