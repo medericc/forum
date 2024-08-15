@@ -23,7 +23,7 @@ class Topic {
   final int id;
   final String title;
   final String description;
-  final String userId; // Correspond à l'auteur
+  final int userId; // Correspond à l'auteur
   final String createdAt;
   final List<Reply> replies; // Liste des réponses
 
@@ -36,9 +36,11 @@ class Topic {
     required this.replies,
   });
 
-  factory Topic.fromJson(Map<String, dynamic> json) {
-    var list = json['replies'] as List;
-    List<Reply> repliesList = list.map((i) => Reply.fromJson(i)).toList();
+factory Topic.fromJson(Map<String, dynamic> json) {
+    var list = json['replies'] as List?;
+    List<Reply> repliesList = list != null 
+        ? list.map((i) => Reply.fromJson(i)).toList() 
+        : [];
 
     return Topic(
       id: json['id'],
