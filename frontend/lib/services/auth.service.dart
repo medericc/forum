@@ -5,41 +5,40 @@ class AuthService {
   static const String baseUrl = 'http://127.0.0.1:5000/api/auth';
 
 Future<String?> login(String username, String password) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json; charset=UTF-8'},
-      body: json.encode({'username': username, 'password': password}),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: json.encode({'username': username, 'password': password}),
+      );
 
-    if (response.statusCode == 200) {
-      // Extract the token from the response
-      final responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
 
-      if (responseData['token'] != null && responseData['token'] is String) {
-        String token = responseData['token'];
+        if (responseData['token'] != null && responseData['token'] is String) {
+          String token = responseData['token'];
+          String userId = responseData['user_id'].toString(); // Assurez-vous que l'API renvoie l'user_id
 
-        // Save the token
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
+          // Enregistrez le token et l'user_id
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('auth_token', token);
+          await prefs.setString('user_id', userId);
 
-        return token;
+          return token;
+        } else {
+          print('Token ou ID utilisateur manquant dans la réponse');
+          return null;
+        }
       } else {
-        print('Token is missing or invalid in the response');
+        print('Échec de la connexion avec le code: ${response.statusCode}');
+        print('Corps de la réponse: ${response.body}');
         return null;
       }
-    } else {
-      // Handle unsuccessful login attempt
-      print('Login failed with status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+    } catch (error) {
+      print('Une erreur est survenue lors de la connexion: $error');
       return null;
     }
-  } catch (error) {
-    // Handle any other errors
-    print('An error occurred during login: $error');
-    return null;
   }
-}
 
 
 
@@ -70,5 +69,9 @@ Future<String?> login(String username, String password) async {
     // Check if there is a valid token stored
     String? token = await getToken();
     return token != null;
+  }
+   Future<String?> getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_id');
   }
 }

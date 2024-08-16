@@ -41,21 +41,45 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     super.dispose();
   }
 
-  void _addReply() async {
-    if (_replyController.text.trim().isEmpty) return;
+void _addReply() async {
+  if (_replyController.text.trim().isEmpty) return;
 
-    if (!isLoggedIn) {
-      _showLoginDialog(context);
-      return;
-    }
-
-    await ApiService().addReply(widget.topic.id, _replyController.text);
-    setState(() {
-      futureReplies = ApiService().getReplies(widget.topic.id);
-    });
-
-    _replyController.clear();
+  if (!isLoggedIn) {
+    _showLoginDialog(context);
+    return;
   }
+
+  // Récupérer l'ID de l'utilisateur connecté depuis les préférences partagées
+  String? userId = await AuthService().getUserId();
+
+  if (userId != null) {
+    // Conversion de l'ID utilisateur en entier
+    int userIdInt = int.parse(userId);
+
+    // Debug: afficher l'ID utilisateur et le contenu de la réponse
+    print('User ID: $userIdInt, Reply Content: ${_replyController.text}');
+
+    try {
+      await ApiService().addReply(widget.topic.id, userIdInt, _replyController.text);
+      setState(() {
+        futureReplies = ApiService().getReplies(widget.topic.id);
+      });
+      _replyController.clear();
+    } catch (error) {
+      print('Failed to add reply: $error');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to add reply. Please try again.'),
+      ));
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('User not logged in.'),
+    ));
+  }
+}
+
+
+
 
   // Dialog de connexion
   void _showLoginDialog(BuildContext context) {
