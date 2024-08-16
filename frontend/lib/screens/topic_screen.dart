@@ -48,25 +48,35 @@ void initState() {
               itemCount: topics.length,
               itemBuilder: (context, index) {
                 
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  elevation: 4.0,
-                  child: ListTile(
-                 title: Text(topics[index].title, style: TextStyle(fontWeight: FontWeight.bold)),
-subtitle: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text('Auteur: ${topics[index].userId}'),  // Remplacer `author` par `user_id`
-    Text('Date: ${topics[index].createdAt}'), // Remplacer `createdAt` par `created_at`
-  ],
-),
-onTap: () {
-  // Naviguer vers l'écran des threads (ThreadsScreen)
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => TopicDetailScreen(topic: topics[index]), // Remplacer TopicDetailScreen par ThreadsScreen
+            return Card(
+  margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+  elevation: 4.0,
+  child: ListTile(
+    title: Text(
+      topics[index].title,
+      style: TextStyle(fontWeight: FontWeight.bold),
     ),
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Auteur: ${topics[index].userId}'),  // Affiche l'ID de l'utilisateur (auteur)
+        Text('Date: ${topics[index].createdAt}'), // Affiche la date de création du topic
+        SizedBox(height: 8.0),  // Ajoute un espace entre les informations de base et la description
+        Text(
+          topics[index].description,  // Affiche la description du sujet
+          maxLines: 2,  // Limite la description à 2 lignes
+          overflow: TextOverflow.ellipsis,  // Ajoute des points de suspension si le texte dépasse la limite
+          style: TextStyle(color: Colors.grey[700]),  // Change la couleur du texte de la description
+        ),
+      ],
+    ),
+    onTap: () {
+      // Naviguer vers l'écran de détail du sujet (TopicDetailScreen)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TopicDetailScreen(topic: topics[index]),
+        ),
   );
 },
 

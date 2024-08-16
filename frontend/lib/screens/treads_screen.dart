@@ -49,15 +49,12 @@ void _addReply() async {
     return;
   }
 
-  // Récupérer l'ID de l'utilisateur connecté depuis les préférences partagées
-  String? userId = await AuthService().getUserId();
+  // Suppose que l'ID de l'utilisateur est récupéré sous forme de chaîne
+  String? userId = await AuthService().getUserId(); 
 
   if (userId != null) {
-    // Conversion de l'ID utilisateur en entier
+    // Convertir l'ID de l'utilisateur en entier avant de l'utiliser
     int userIdInt = int.parse(userId);
-
-    // Debug: afficher l'ID utilisateur et le contenu de la réponse
-    print('User ID: $userIdInt, Reply Content: ${_replyController.text}');
 
     try {
       await ApiService().addReply(widget.topic.id, userIdInt, _replyController.text);
@@ -77,6 +74,7 @@ void _addReply() async {
     ));
   }
 }
+
 
 
 
@@ -278,19 +276,19 @@ void _addReply() async {
                       return Center(child: Text('Pas de réponses pour le moment'));
                     } else {
                       List<reply_model.Reply> replies = snapshot.data!;
-                      return ListView.builder(
-                        itemCount: replies.length,
-                        itemBuilder: (context, index) {
-                          return Card(
-                            margin: EdgeInsets.symmetric(vertical: 8.0),
-                            child: ListTile(
-                              title: Text('Utilisateur ${replies[index].userId}'),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(replies[index].content),
-                                  Text('Posté le ${replies[index].createdAt}'),
-                                ],
+                    return ListView.builder(
+  itemCount: replies.length,
+  itemBuilder: (context, index) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        title: Text('Utilisateur ${replies[index].userId}'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(replies[index].description), // Remplacez `content` par `description`
+            Text('Posté le ${replies[index].createdAt}'),
+          ],
                               ),
                             ),
                           );

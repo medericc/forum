@@ -69,7 +69,7 @@ Future<List<reply_model.Reply>> getReplies(int topicId) async {
 
 
 
-Future<void> addReply(int topicId, int userId, String content) async {
+Future<void> addReply(int topicId, int userId, String description) async {
     final response = await http.post(
       Uri.parse('$baseUrl/replies'),
       headers: <String, String>{
@@ -78,7 +78,7 @@ Future<void> addReply(int topicId, int userId, String content) async {
       body: jsonEncode(<String, dynamic>{
         'topic_id': topicId,
         'user_id': userId,
-        'content': content,
+        'description': description,
       }),
     );
 
