@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/topic.dart';
 import '../models/reply.dart' as reply_model;
 import '../services/api_services.dart';
@@ -27,7 +29,6 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   void _checkLoginStatus() async {
-    // Vérifiez si l'utilisateur est connecté
     bool loggedIn = await AuthService().isLoggedIn;
     setState(() {
       isLoggedIn = loggedIn;
@@ -44,25 +45,46 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     if (_replyController.text.trim().isEmpty) return;
 
     if (!isLoggedIn) {
-      _showLoginAlert();
+      _showLoginDialog(context);
       return;
     }
 
     await ApiService().addReply(widget.topic.id, _replyController.text);
     setState(() {
-      futureReplies = ApiService().getReplies(widget.topic.id); // Reload replies
+      futureReplies = ApiService().getReplies(widget.topic.id);
     });
 
     _replyController.clear();
   }
 
-  void _showLoginAlert() {
+  // Dialog de connexion
+  void _showLoginDialog(BuildContext context) {
+    final TextEditingController _usernameController = TextEditingController();
+    final TextEditingController _passwordController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Connexion requise'),
-          content: Text('Vous devez être connecté pour répondre à ce sujet.'),
+          title: Text('Connexion'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Nom d\'utilisateur',
+                ),
+              ),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -70,12 +92,24 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               },
               child: Text('Annuler'),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/login');
+            ElevatedButton(
+              onPressed: () async {
+                String? token = await AuthService().login(
+                  _usernameController.text,
+                  _passwordController.text,
+                );
+                if (token != null) {
+                  setState(() {
+                    isLoggedIn = true;
+                  });
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Échec de la connexion. Veuillez réessayer.'),
+                  ));
+                }
               },
-              child: Text('Se connecter'),
+              child: Text('Connexion'),
             ),
           ],
         );
@@ -83,11 +117,114 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     );
   }
 
+  // Dialog d'inscription
+  void _showRegisterDialog(BuildContext context) {
+    final TextEditingController _usernameController = TextEditingController();
+    final TextEditingController _passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Inscription'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Nom d\'utilisateur',
+                ),
+              ),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                bool success = await _registerUser(
+                  _usernameController.text,
+                  _passwordController.text,
+                );
+                if (success) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Inscription réussie. Veuillez vous connecter.'),
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Échec de l\'inscription. Veuillez réessayer.'),
+                  ));
+                }
+              },
+              child: Text('Inscription'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> _registerUser(String username, String password) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/api/auth/register'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    return response.statusCode == 201;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.topic.title),
+        actions: [
+          isLoggedIn
+              ? IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () {
+                    AuthService().logout();
+                    setState(() {
+                      isLoggedIn = false;
+                    });
+                  },
+                )
+              : Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.login),
+                      onPressed: () {
+                        _showLoginDialog(context);
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.person_add),
+                      onPressed: () {
+                        _showRegisterDialog(context);
+                      },
+                    ),
+                  ],
+                ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -104,47 +241,44 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
             Text('Auteur: ${widget.topic.userId}'),
             Text('Date: ${widget.topic.createdAt}'),
             SizedBox(height: 32.0),
-           Expanded(
-  child: FutureBuilder<List<reply_model.Reply>>(
-    future: futureReplies,
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      } else if (snapshot.hasError) {
-        return Center(child: Text('Erreur: ${snapshot.error}'));
-      } else if (snapshot.hasData) {
-        // Check if the list is empty
-        if (snapshot.data!.isEmpty) {
-          return Center(child: Text('Pas de réponses pour le moment'));
-        } else {
-          List<reply_model.Reply> replies = snapshot.data!;
-          return ListView.builder(
-            itemCount: replies.length,
-            itemBuilder: (context, index) {
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 8.0),
-                child: ListTile(
-                  title: Text('Utilisateur ${replies[index].userId}'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(replies[index].content),
-                      Text('Posté le ${replies[index].createdAt}'),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        }
-      } else {
-        // Fallback case for unexpected scenarios
-        return Center(child: Text('Pas de réponses pour le moment'));
-      }
-    },
-  ),
-),
-
+            Expanded(
+              child: FutureBuilder<List<reply_model.Reply>>(
+                future: futureReplies,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Erreur: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    if (snapshot.data!.isEmpty) {
+                      return Center(child: Text('Pas de réponses pour le moment'));
+                    } else {
+                      List<reply_model.Reply> replies = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: replies.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: EdgeInsets.symmetric(vertical: 8.0),
+                            child: ListTile(
+                              title: Text('Utilisateur ${replies[index].userId}'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(replies[index].content),
+                                  Text('Posté le ${replies[index].createdAt}'),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  } else {
+                    return Center(child: Text('Pas de réponses pour le moment'));
+                  }
+                },
+              ),
+            ),
             SizedBox(height: 16.0),
             TextField(
               controller: _replyController,
