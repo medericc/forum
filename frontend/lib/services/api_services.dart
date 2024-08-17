@@ -68,16 +68,16 @@ Future<List<reply_model.Reply>> getReplies(int topicId) async {
 
 
 
-Future<void> addReply(int topicId, int userId, String description) async {
+Future<void> addReply(int topicId, int userId, String content) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/replies'),
+      Uri.parse('$baseUrl/reply'),  // Changement de 'replies' à 'reply'
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, dynamic>{
         'topic_id': topicId,
         'user_id': userId,
-        'description': description,
+        'content': content,  // Remplacement de 'description' par 'content'
       }),
     );
 
@@ -87,5 +87,6 @@ Future<void> addReply(int topicId, int userId, String description) async {
       print('Failed to add reply: ${response.statusCode}');
       throw Exception('Failed to add reply');
     }
-  }
+}
+
 }

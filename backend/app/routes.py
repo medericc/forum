@@ -66,13 +66,13 @@ def add_reply():
     data = request.get_json()
     topic_id = data.get('topic_id')
     user_id = data.get('user_id')
-    content = data.get('content')
+    description = data.get('description')
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        sql = "INSERT INTO reply (topic_id, user_id, content, created_at) VALUES (%s, %s, %s, NOW())"
-        cursor.execute(sql, (topic_id, user_id, content))
+        sql = "INSERT INTO reply (topic_id, user_id, description, created_at) VALUES (%s, %s, %s, NOW())"
+        cursor.execute(sql, (topic_id, user_id, description))
         conn.commit()
         cursor.close()
         conn.close()
