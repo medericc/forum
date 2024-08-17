@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'user_list_screen.dart';
 import 'topic_screen.dart';
-import 'category_screen.dart';
 import '../services/auth.service.dart';
 
 class HomeScreen extends StatefulWidget {

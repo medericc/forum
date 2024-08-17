@@ -3,11 +3,6 @@ import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../models/category.dart';
 import '../models/topic.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/user.dart';
-import '../models/category.dart';
-import '../models/topic.dart';
 import '../models/reply.dart' as reply_model;
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:5000'; 
@@ -68,7 +63,7 @@ Future<List<reply_model.Reply>> getReplies(int topicId) async {
 
 
 
-Future<void> addReply(int topicId, int userId, String content) async {
+Future<void> addReply(int topicId, int userId, String description) async {
     final response = await http.post(
       Uri.parse('$baseUrl/reply'),  // Changement de 'replies' à 'reply'
       headers: <String, String>{
@@ -77,7 +72,7 @@ Future<void> addReply(int topicId, int userId, String content) async {
       body: jsonEncode(<String, dynamic>{
         'topic_id': topicId,
         'user_id': userId,
-        'content': content,  // Remplacement de 'description' par 'content'
+        'description': description,  
       }),
     );
 
