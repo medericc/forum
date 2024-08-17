@@ -1,44 +1,45 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
 class AuthService {
   static const String baseUrl = 'http://127.0.0.1:5000/api/auth';
 
 Future<String?> login(String username, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/login'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode({'username': username, 'password': password}),
-      );
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/login'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      body: json.encode({'username': username, 'password': password}),
+    );
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
 
-        if (responseData['token'] != null && responseData['token'] is String) {
-          String token = responseData['token'];
-          String userId = responseData['user_id'].toString(); // Assurez-vous que l'API renvoie l'user_id
+      // Utilisation de JwtDecoder pour décoder le JWT
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(responseData['token']);
+      String userId = decodedToken['user_id'].toString();
 
-          // Enregistrez le token et l'user_id
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', token);
-          await prefs.setString('user_id', userId);
+      print('User ID on login: $userId');
 
-          return token;
-        } else {
-          print('Token ou ID utilisateur manquant dans la réponse');
-          return null;
-        }
-      } else {
-        print('Échec de la connexion avec le code: ${response.statusCode}');
-        print('Corps de la réponse: ${response.body}');
-        return null;
-      }
-    } catch (error) {
-      print('Une erreur est survenue lors de la connexion: $error');
+      // Sauvegarde du token et de l'user_id
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', responseData['token']);
+      await prefs.setString('user_id', userId);
+
+      return responseData['token'];
+    } else {
+      print('Échec de la connexion avec le code : ${response.statusCode}');
+      print('Contenu de la réponse : ${response.body}');
       return null;
     }
+  } catch (error) {
+    print('Une erreur est survenue lors de la connexion : $error');
+    return null;
   }
+}
+
 
 
 
@@ -70,8 +71,14 @@ Future<String?> login(String username, String password) async {
     String? token = await getToken();
     return token != null;
   }
-   Future<String?> getUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_id');
-  }
+Future<String?> getUserId() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? userId = prefs.getString('user_id');
+
+  // Debug: Print the retrieved userId
+  print('Retrieved User ID from SharedPreferences: $userId');
+
+  return userId;
+}
+
 }

@@ -10,7 +10,7 @@ import '../models/category.dart';
 import '../models/topic.dart';
 import '../models/reply.dart' as reply_model;
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:5000'; // Change to 10.0.2.2 for Android Emulator
+  static const String baseUrl = 'http://127.0.0.1:5000'; 
 
   Future<List<User>> getUsers() async {
     final response = await http.get(Uri.parse('$baseUrl/users'));
@@ -45,7 +45,6 @@ class ApiService {
     }
   }
 
-  // Nouvelle méthode pour obtenir les topics par catégorie
   Future<List<Topic>> getTopicsByCategory(int categoryId) async {
     final response = await http.get(Uri.parse('$baseUrl/categories/$categoryId/topics'));
 

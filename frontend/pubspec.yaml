@@ -15,7 +15,7 @@ dependencies:
   http: ^1.2.2
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.0.15  # Corrigez l'indentation ici et mettez-la sous dependencies
-
+  jwt_decoder: ^2.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

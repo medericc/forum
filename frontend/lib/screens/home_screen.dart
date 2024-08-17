@@ -309,7 +309,14 @@ void _showTopicCreationDialog(BuildContext context) {
             onPressed: () async {
               String topicTitle = _topicTitleController.text;
               String topicContent = _topicContentController.text;
-              bool success = await _createTopic(topicTitle, topicContent, _selectedCategoryId);
+              
+              // Call the _createTopic method without passing currentUser.id
+              bool success = await _createTopic(
+                topicTitle, 
+                topicContent, 
+                _selectedCategoryId,
+              );
+              
               if (success) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -331,19 +338,49 @@ void _showTopicCreationDialog(BuildContext context) {
 
 
 
-  Future<bool> _createTopic(String title, String description, int categoryId) async {
-    final response = await http.post(
-      Uri.parse('http://127.0.0.1:5000/topics'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'title': title,
-        'description': description,
-        'category_id': categoryId,
-      }),
-    );
+Future<bool> _createTopic(String title, String description, int categoryId) async {
+  String? userId = await AuthService().getUserId();
 
-    return response.statusCode == 201;
+  // Vérifiez si l'ID utilisateur est valide
+  if (userId == null || userId.isEmpty) {
+    print('ID utilisateur est nul ou vide');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Erreur: ID utilisateur non valide.'),
+    ));
+    return false;
   }
+
+  int parsedUserId;
+  try {
+    parsedUserId = int.parse(userId);  // Convertit l'ID en entier
+  } catch (e) {
+    print('Erreur lors de la conversion de l\'ID utilisateur: $e');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Format d\'ID utilisateur invalide.'),
+    ));
+    return false;
+  }
+
+  // Si l'ID est correct, continuez avec l'API
+  final response = await http.post(
+    Uri.parse('http://127.0.0.1:5000/topics'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, dynamic>{
+      'title': title,
+      'description': description,
+      'category_id': categoryId,
+      'user_id': parsedUserId,  // Utilisation de l'ID utilisateur converti
+    }),
+  );
+
+  return response.statusCode == 201;
+}
+
+
+
+
+
+
 }
