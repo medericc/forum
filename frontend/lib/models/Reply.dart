@@ -7,11 +7,29 @@ class Reply {
   Reply({required this.id, required this.userId, required this.description, required this.createdAt});
 
   factory Reply.fromJson(Map<String, dynamic> json) {
+    // Essayer de parser la date, sinon renvoyer une date par défaut
+    DateTime createdAt;
+    try {
+      createdAt = DateTime.parse(json['created_at']);
+    } catch (e) {
+      print("Error parsing date: ${json['created_at']}");
+      createdAt = DateTime.now(); // Ou toute autre valeur par défaut
+    }
+
     return Reply(
       id: json['id'],
       userId: json['user_id'],
       description: json['description'],
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: createdAt,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'description': description,
+      'created_at': createdAt.toIso8601String(),
+    };
   }
 }

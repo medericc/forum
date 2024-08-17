@@ -1,31 +1,11 @@
-class Reply {
-  final String author;
-  final String content;
-
-  Reply({required this.author, required this.content});
-
-  factory Reply.fromJson(Map<String, dynamic> json) {
-    return Reply(
-      author: json['author'],
-      content: json['content'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'author': author,
-      'content': content,
-    };
-  }
-}
-
+import 'Reply.dart';
 class Topic {
   final int id;
   final String title;
   final String description;
-  final int userId; // Correspond à l'auteur
-  final String createdAt;
-  final List<Reply> replies; // Liste des réponses
+  final int userId; 
+  final String createdAt; 
+  final List<Reply> replies;
 
   Topic({
     required this.id,
@@ -36,7 +16,7 @@ class Topic {
     required this.replies,
   });
 
-factory Topic.fromJson(Map<String, dynamic> json) {
+  factory Topic.fromJson(Map<String, dynamic> json) {
     var list = json['replies'] as List?;
     List<Reply> repliesList = list != null 
         ? list.map((i) => Reply.fromJson(i)).toList() 
