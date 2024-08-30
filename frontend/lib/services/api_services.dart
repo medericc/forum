@@ -84,4 +84,54 @@ Future<void> addReply(int topicId, int userId, String description) async {
     }
 }
 
+ // Méthode pour supprimer un sujet
+Future<void> deleteTopic(int topicId, int userId) async {
+  // Log les paramètres d'entrée
+  print('deleteTopic called with topicId: $topicId, userId: $userId');
+
+  try {
+    final response = await http.delete(
+      Uri.parse('http://127.0.0.1:5000/topics/$topicId'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, int>{
+        'user_id': userId,
+      }),
+    );
+
+    // Log la réponse du serveur
+    print('Server response: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      print('Topic deleted successfully!');
+    } else {
+      print('Failed to delete topic: ${response.statusCode}');
+      throw Exception('Failed to delete topic');
+    }
+  } catch (e) {
+    // Log en cas d'exception
+    print('Error occurred while deleting topic: $e');
+    throw Exception('Error occurred while deleting topic');
+  }
+}
+
+  // Méthode pour supprimer une réponse
+  Future<void> deleteReply(int replyId, int userId) async {
+    final response = await http.delete(
+      Uri.parse('http://127.0.0.1:5000/api/replies/$replyId'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, int>{
+        'user_id': userId,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete reply');
+    }
+  }
+  
 }
