@@ -84,7 +84,7 @@ class _TopicListScreenState extends State<TopicListScreen> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Auteur: ${topic.userId}'),
+                        Text('Auteur: ${topic.username}'),
                         Text('Date: ${topic.createdAt}'),
                       ],
                     ),
