@@ -119,19 +119,19 @@ Future<void> deleteTopic(int topicId, int userId) async {
 
   // Méthode pour supprimer une réponse
   Future<void> deleteReply(int replyId, int userId) async {
-    final response = await http.delete(
-      Uri.parse('http://127.0.0.1:5000/api/replies/$replyId'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, int>{
-        'user_id': userId,
-      }),
-    );
+  final response = await http.delete(
+    Uri.parse('$baseUrl/replies/$replyId'), // Assurez-vous que l'URL est correcte
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, int>{
+      'user_id': userId,  // Inclure l'ID de l'utilisateur dans le corps de la requête
+    }),
+  );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete reply');
-    }
+  if (response.statusCode != 200) {
+    throw Exception('Failed to delete reply');
   }
+}
   
 }

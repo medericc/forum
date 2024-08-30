@@ -41,45 +41,38 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     super.dispose();
   }
 
-void _addReply() async {
-  if (_replyController.text.trim().isEmpty) return;
+  void _addReply() async {
+    if (_replyController.text.trim().isEmpty) return;
 
-  if (!isLoggedIn) {
-    _showLoginDialog(context);
-    return;
-  }
+    if (!isLoggedIn) {
+      _showLoginDialog(context);
+      return;
+    }
 
-  // Suppose que l'ID de l'utilisateur est récupéré sous forme de chaîne
-  String? userId = await AuthService().getUserId(); 
+    String? userId = await AuthService().getUserId(); 
 
-  if (userId != null) {
-    // Convertir l'ID de l'utilisateur en entier avant de l'utiliser
-    int userIdInt = int.parse(userId);
+    if (userId != null) {
+      int userIdInt = int.parse(userId);
 
-    try {
-      await ApiService().addReply(widget.topic.id, userIdInt, _replyController.text);
-      setState(() {
-        futureReplies = ApiService().getReplies(widget.topic.id);
-      });
-      _replyController.clear();
-    } catch (error) {
-      print('Failed to add reply: $error');
+      try {
+        await ApiService().addReply(widget.topic.id, userIdInt, _replyController.text);
+        setState(() {
+          futureReplies = ApiService().getReplies(widget.topic.id);
+        });
+        _replyController.clear();
+      } catch (error) {
+        print('Failed to add reply: $error');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Failed to add reply. Please try again.'),
+        ));
+      }
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to add reply. Please try again.'),
+        content: Text('User not logged in.'),
       ));
     }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('User not logged in.'),
-    ));
   }
-}
 
-
-
-
-
-  // Dialog de connexion
   void _showLoginDialog(BuildContext context) {
     final TextEditingController _usernameController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
@@ -139,7 +132,6 @@ void _addReply() async {
     );
   }
 
-  // Dialog d'inscription
   void _showRegisterDialog(BuildContext context) {
     final TextEditingController _usernameController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
@@ -276,19 +268,49 @@ void _addReply() async {
                       return Center(child: Text('Pas de réponses pour le moment'));
                     } else {
                       List<reply_model.Reply> replies = snapshot.data!;
-                    return ListView.builder(
-  itemCount: replies.length,
-  itemBuilder: (context, index) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        title: Text('Utilisateur ${replies[index].userId}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(replies[index].description), // Remplacez `content` par `description`
-            Text('Posté le ${replies[index].createdAt}'),
-          ],
+                      return ListView.builder(
+                        itemCount: replies.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: EdgeInsets.symmetric(vertical: 8.0),
+                            child: ListTile(
+                              title: Text('Utilisateur ${replies[index].userId}'),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(replies[index].description),
+                                  Text('Posté le ${replies[index].createdAt}'),
+                                  FutureBuilder<String?>(
+                                    future: AuthService().getUserId(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return CircularProgressIndicator();
+                                      } else if (snapshot.hasError) {
+                                        return Text('Erreur lors de la vérification de l\'utilisateur');
+                                      } else if (snapshot.hasData) {
+                                        if (isLoggedIn && replies[index].userId.toString() == snapshot.data) {
+                                          return TextButton(
+                                            onPressed: () async {
+                                              try {
+                                                await ApiService().deleteReply(replies[index].id, replies[index].userId);
+                                                setState(() {
+                                                  futureReplies = ApiService().getReplies(widget.topic.id);
+                                                });
+                                              } catch (error) {
+                                                print('Failed to delete reply: $error');
+                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                  content: Text('Failed to delete reply. Please try again.'),
+                                                ));
+                                              }
+                                            },
+                                            child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                          );
+                                        }
+                                      }
+                                      return SizedBox.shrink();
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           );
