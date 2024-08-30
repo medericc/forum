@@ -32,7 +32,12 @@ def get_categories():
 def get_topics_by_category(category_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM topics WHERE category_id = %s", (category_id,))
+    cursor.execute("""
+        SELECT topics.*, users.username
+        FROM topics
+        JOIN users ON topics.user_id = users.id
+        WHERE topics.category_id = %s
+    """, (category_id,))
     topics = cursor.fetchall()
     cursor.close()
     conn.close()

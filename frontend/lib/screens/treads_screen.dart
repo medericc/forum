@@ -68,7 +68,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('User not logged in.'),
+         content: Text('User ID is null. Please try again.'),
       ));
     }
   }
@@ -252,7 +252,8 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
             SizedBox(height: 8.0),
             Text(widget.topic.description, style: TextStyle(fontSize: 18)),
             SizedBox(height: 16.0),
-            Text('Auteur: ${widget.topic.userId}'),
+           Text('Auteur: ${widget.topic.username ?? "Unknown"}'),
+
             Text('Date: ${widget.topic.createdAt}'),
             SizedBox(height: 32.0),
             Expanded(
