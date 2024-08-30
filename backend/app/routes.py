@@ -91,7 +91,12 @@ def add_reply():
 def get_replies(topic_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM reply WHERE topic_id = %s", (topic_id,))
+    cursor.execute("""
+        SELECT reply.*, users.username
+        FROM reply
+        JOIN users ON reply.user_id = users.id
+        WHERE reply.topic_id = %s
+    """, (topic_id,))
     replies = cursor.fetchall()
     cursor.close()
     conn.close()

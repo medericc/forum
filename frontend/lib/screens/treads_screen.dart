@@ -246,14 +246,14 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.topic.title,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            '${widget.topic.username ?? "Unknown"}',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8.0),
-            Text(widget.topic.description, style: TextStyle(fontSize: 18)),
-            SizedBox(height: 16.0),
-           Text('Auteur: ${widget.topic.username ?? "Unknown"}'),
-
+           
+           SizedBox(height: 4.0),
+           
+           Text( widget.topic.description),
+ SizedBox(height: 5.0),
             Text('Date: ${widget.topic.createdAt}'),
             SizedBox(height: 32.0),
             Expanded(
@@ -275,10 +275,13 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                           return Card(
                             margin: EdgeInsets.symmetric(vertical: 8.0),
                             child: ListTile(
-                              title: Text('Utilisateur ${replies[index].userId}'),
+                              
+                             title: Text('${replies[index].username}',style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+                            
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                   SizedBox(height: 11.0),
                                   Text(replies[index].description),
                                   Text('Posté le ${replies[index].createdAt}'),
                                   FutureBuilder<String?>(
