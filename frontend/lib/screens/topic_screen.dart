@@ -17,6 +17,7 @@ class _TopicListScreenState extends State<TopicListScreen> {
   late Future<List<Topic>> futureTopics;
   bool isLoggedIn = false;
   String? userId;
+  String? userRole; // Ajoutez une variable pour le rôle de l'utilisateur
 
   @override
   void initState() {
@@ -31,28 +32,36 @@ class _TopicListScreenState extends State<TopicListScreen> {
   void _checkLoginStatus() async {
     isLoggedIn = await AuthService().isLoggedIn;
     userId = await AuthService().getUserId();
+    userRole = await AuthService().getRole(); // Récupérez le rôle de l'utilisateur
     setState(() {});
   }
 
   // Méthode pour supprimer un sujet
-  void _deleteTopic(int topicId) async {
-    if (userId != null) {  // Vérifier que le userId est défini
-      try {
-        await ApiService().deleteTopic(topicId, int.parse(userId!));  // Passer les deux arguments ici
+ void _deleteTopic(int topicId) async {
+  if (userId != null && userRole != null) {  // Check that the userId and role are defined
+    try {
+      // Allow deletion if the user is an admin, moderator, or the owner of the topic
+      if (userRole == 'admin' || userRole == 'moderator' || int.parse(userId!) == topicId) {
+        await ApiService().deleteTopic(topicId, int.parse(userId!), userRole!); // Pass role
         setState(() {
           futureTopics = ApiService().getTopicsByCategory(widget.categoryId);
         });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Sujet supprimé avec succès.'),
         ));
-      } catch (error) {
-        print('Failed to delete topic: $error');
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Échec de la suppression du sujet. Veuillez réessayer.'),
+          content: Text('Vous n\'avez pas les permissions nécessaires pour supprimer ce sujet.'),
         ));
       }
+    } catch (error) {
+      print('Failed to delete topic: $error');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Échec de la suppression du sujet. Veuillez réessayer.'),
+      ));
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -88,23 +97,22 @@ class _TopicListScreenState extends State<TopicListScreen> {
                         Text('Date: ${topic.createdAt}'),
                       ],
                     ),
-        trailing: isLoggedIn && topic.userId.toString() == userId
+                  trailing: isLoggedIn &&
+        (userRole == 'admin' || userRole == 'moderator' || topic.userId.toString() == userId)
     ? IconButton(
         icon: Icon(Icons.delete, color: Colors.red),
         onPressed: () => _deleteTopic(topic.id),
       )
     : null,
-onTap: () {
-  print('Topic User ID: ${topic.userId}, Logged in User ID: $userId, isLoggedIn: $isLoggedIn');
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => TopicDetailScreen(topic: topic),
-    ),
-  );
-},
-
-
+                    onTap: () {
+                      print('Topic User ID: ${topic.userId}, Logged in User ID: $userId, isLoggedIn: $isLoggedIn');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TopicDetailScreen(topic: topic),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

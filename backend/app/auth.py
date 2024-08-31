@@ -21,9 +21,10 @@ def login():
     conn.close()
 
     if user and check_password_hash(user['password_hash'], password):
-        # Génération du token JWT
+        # Génération du token JWT avec le rôle de l'utilisateur
         token = jwt.encode({
             'user_id': user['id'],  # ID de l'utilisateur
+            'role': user['role'],   # Rôle de l'utilisateur
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)  # Expiration du token dans 24h
         }, SECRET_KEY, algorithm='HS256')
 
@@ -36,6 +37,13 @@ def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    admin_code = data.get('admin_code')  # Clé secrète pour devenir admin
+
+    # Clé secrète pour devenir admin
+    ADMIN_SECRET_CODE = "votre_code_secret_pour_admin"
+
+    # Déterminer le rôle : 'admin' si le code est correct, sinon 'user'
+    role = 'admin' if admin_code == ADMIN_SECRET_CODE else 'user'
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -48,7 +56,10 @@ def register():
         return jsonify({"message": "Utilisateur existe déjà"}), 400
 
     hashed_password = generate_password_hash(password)
-    cursor.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s)", (username, hashed_password))
+    cursor.execute(
+        "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", 
+        (username, hashed_password, role)
+    )
     conn.commit()
     cursor.close()
     conn.close()

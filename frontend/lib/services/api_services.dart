@@ -84,10 +84,9 @@ Future<void> addReply(int topicId, int userId, String description) async {
     }
 }
 
- // Méthode pour supprimer un sujet
-Future<void> deleteTopic(int topicId, int userId) async {
+Future<void> deleteTopic(int topicId, int userId, String userRole) async {
   // Log les paramètres d'entrée
-  print('deleteTopic called with topicId: $topicId, userId: $userId');
+  print('deleteTopic called with topicId: $topicId, userId: $userId, userRole: $userRole');
 
   try {
     final response = await http.delete(
@@ -95,8 +94,9 @@ Future<void> deleteTopic(int topicId, int userId) async {
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, int>{
+      body: jsonEncode(<String, dynamic>{
         'user_id': userId,
+        'user_role': userRole,  // Inclure le rôle de l'utilisateur dans le corps de la requête
       }),
     );
 
@@ -117,15 +117,18 @@ Future<void> deleteTopic(int topicId, int userId) async {
   }
 }
 
+
   // Méthode pour supprimer une réponse
-  Future<void> deleteReply(int replyId, int userId) async {
+Future<void> deleteReply(int replyId, int userId, String userRole) async {
   final response = await http.delete(
     Uri.parse('$baseUrl/replies/$replyId'), // Assurez-vous que l'URL est correcte
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
+      'User-Role': userRole,  // Optionnel: Inclure le rôle de l'utilisateur dans les en-têtes si nécessaire
     },
-    body: jsonEncode(<String, int>{
-      'user_id': userId,  // Inclure l'ID de l'utilisateur dans le corps de la requête
+    body: jsonEncode(<String, dynamic>{
+      'user_id': userId,       // Inclure l'ID de l'utilisateur dans le corps de la requête
+      'user_role': userRole,   // Inclure le rôle de l'utilisateur dans le corps de la requête
     }),
   );
 
@@ -133,5 +136,6 @@ Future<void> deleteTopic(int topicId, int userId) async {
     throw Exception('Failed to delete reply');
   }
 }
+
   
 }

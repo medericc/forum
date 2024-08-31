@@ -106,63 +106,61 @@ def get_replies(topic_id):
 @bp.route('/topics/<int:topic_id>', methods=['DELETE'])
 def delete_topic(topic_id):
     user_id = request.json.get('user_id')
-    print(f"User ID: {user_id} is attempting to delete topic ID: {topic_id}")
-    
+    user_role = request.json.get('role')  # Récupérer le rôle de l'utilisateur
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        # Check if the topic belongs to the user
-        cursor.execute("SELECT * FROM topics WHERE id = %s AND user_id = %s", (topic_id, user_id))
+        # Vérifier si l'utilisateur est le créateur du topic ou un administrateur
+        cursor.execute("SELECT * FROM topics WHERE id = %s", (topic_id,))
         topic = cursor.fetchone()
 
-        if not topic:
-            print(f"Topic not found or user doesn't have permission: topic_id: {topic_id}, user_id: {user_id}")
-            return jsonify({"message": "Topic non trouvé ou vous n'avez pas la permission de le supprimer"}), 404
+        if not topic or (topic['user_id'] != user_id and user_role != 'admin'):
+            return jsonify({"message": "Vous n'avez pas la permission de supprimer ce topic"}), 403
 
-        # Delete associated replies first
+        # Supprimer les réponses associées
         cursor.execute("DELETE FROM reply WHERE topic_id = %s", (topic_id,))
-        print(f"Deleted replies associated with topic_id: {topic_id}")
-
-        # Then delete the topic
+        
+        # Supprimer le topic
         cursor.execute("DELETE FROM topics WHERE id = %s", (topic_id,))
         conn.commit()
-        print(f"Topic deleted successfully: topic_id: {topic_id}")
+
         return jsonify({"message": "Topic supprimé avec succès"}), 200
 
     except mysql.connector.Error as err:
-        print(f"Erreur lors de la suppression du topic: {err}")
         return jsonify({"error": "Erreur lors de la suppression du topic"}), 500
     
     finally:
         cursor.close()
         conn.close()
 
+
 @bp.route('/replies/<int:reply_id>', methods=['DELETE'])
 def delete_reply(reply_id):
-    user_id = request.json.get('user_id')  # Assurez-vous que l'ID utilisateur est envoyé dans la requête
+    user_id = request.json.get('user_id')
+    user_role = request.json.get('role')  # Récupérer le rôle de l'utilisateur
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Vérifiez que la réponse appartient bien à l'utilisateur
-    cursor.execute("SELECT * FROM reply WHERE id = %s AND user_id = %s", (reply_id, user_id))
-    reply = cursor.fetchone()
-
-    if not reply:
-        cursor.close()
-        conn.close()
-        return jsonify({"message": "Réponse non trouvée ou vous n'avez pas la permission de la supprimer"}), 404
-
     try:
-        # Supprimez la réponse
+        # Vérifier si l'utilisateur est le créateur de la réponse ou un administrateur
+        cursor.execute("SELECT * FROM reply WHERE id = %s", (reply_id,))
+        reply = cursor.fetchone()
+
+        if not reply or (reply['user_id'] != user_id and user_role != 'admin'):
+            return jsonify({"message": "Vous n'avez pas la permission de supprimer cette réponse"}), 403
+
+        # Supprimer la réponse
         cursor.execute("DELETE FROM reply WHERE id = %s", (reply_id,))
         conn.commit()
-        cursor.close()
-        conn.close()
+
         return jsonify({"message": "Réponse supprimée avec succès"}), 200
+
     except mysql.connector.Error as err:
+        return jsonify({"error": "Erreur lors de la suppression de la réponse"}), 500
+    
+    finally:
         cursor.close()
         conn.close()
-        print(f"Erreur: {err}")
-        return jsonify({"error": "Erreur lors de la suppression de la réponse"}), 500
