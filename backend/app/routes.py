@@ -164,3 +164,40 @@ def delete_reply(reply_id):
     finally:
         cursor.close()
         conn.close()
+# Route to like a reply
+@bp.route('/replies/<int:reply_id>/like', methods=['POST'])
+@jwt_required()
+def like_reply(reply_id):
+    user_id = get_jwt_identity()  # Obtenir l'ID de l'utilisateur connecté
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Vérifier si l'utilisateur a déjà liké cette réponse
+        cursor.execute("""
+            SELECT * FROM reply_likes WHERE user_id = %s AND reply_id = %s
+        """, (user_id, reply_id))
+        already_liked = cursor.fetchone()
+
+        if already_liked:
+            return jsonify({"message": "Vous avez déjà liké cette réponse"}), 400
+
+        # Ajouter un like à la table reply_likes
+        cursor.execute("""
+            INSERT INTO reply_likes (user_id, reply_id) VALUES (%s, %s)
+        """, (user_id, reply_id))
+        
+        # Incrémenter le compteur de likes dans la table reply
+        cursor.execute("""
+            UPDATE reply SET like_count = like_count + 1 WHERE id = %s
+        """, (reply_id,))
+        
+        conn.commit()
+        return jsonify({"message": "Réponse likée avec succès"}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": "Erreur lors du like de la réponse"}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
